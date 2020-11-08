@@ -1,0 +1,56 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- master
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'e2bffae0-bda0-4115-a26e-d65d494e6d86'
+  imageRepository: 'mypythonapp'
+  containerRegistryName: 'aksdemodeploy'
+  containerRegistry: 'aksdemodeploy.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '$(Build.BuildId)'
+  
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:  
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+  - job: HelmPackage
+    steps:
+    - task: HelmInstaller@1
+      inputs:
+        helmVersionToInstall: '3.2.1'
+    - task: HelmDeploy@0
+      inputs:
+        command: 'package'
+        chartPath: 'helm/mypythonapp'
+        chartVersion: '$(tag)'
+    - task: AzureCLI@1
+      displayName: 'Azure CLI  - Push Helm Package'
+      inputs:
+        azureSubscription: 'padasil-internal(d715d5e4-d389-48cd-8418-8514bea2a27e)'
+        scriptLocation: 'inlineScript'
+        inlineScript: 'az acr helm push -n $(containerRegistryName) $(Build.ArtifactStagingDirectory)/mypythonapp-$(tag).tgz'
