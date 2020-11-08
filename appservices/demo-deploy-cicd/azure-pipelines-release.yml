@@ -1,0 +1,33 @@
+# Docker
+# Build a Docker image 
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger: none
+resources:
+  pipelines:
+  - pipeline: 'build'   # Name of the pipeline resource
+    source: 'Build' # Name of the triggering pipeline
+    trigger: 
+      branches:
+      - develop
+      - releases/*
+      - master
+
+variables:
+- name: tag
+  value: '$(resources.pipeline.build.runId)'
+  
+stages:
+- stage: Deploy
+  displayName: Deploy on Kubernetes
+  jobs:  
+  - job: Deploy
+    displayName: Deploy on AppServices
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureWebAppContainer@1
+      inputs:
+        azureSubscription: 'padasil-internal(d715d5e4-d389-48cd-8418-8514bea2a27e)'
+        appName: 'deepdivecicddeploy'
+        containers: 'deepdiveweekcontainer.azurecr.io/mypythonapp:$(tag)'
