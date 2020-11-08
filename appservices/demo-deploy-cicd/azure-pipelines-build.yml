@@ -15,6 +15,7 @@ variables:
   containerRegistryName: 'deepdiveweekcontainer'
   containerRegistry: 'deepdiveweekcontainer.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/appservices/demo-deploy-cicd/src/Dockerfile'
+  dockerContextPath: $(Build.SourcesDirectory)/appservices/demo-deploy-cicd/src
   tag: '$(Build.BuildId)'
   
   # Agent VM image name
@@ -35,7 +36,7 @@ stages:
         command: buildAndPush
         repository: $(imageRepository)
         dockerfile: $(dockerfilePath)
-        buildContext: $(Build.SourcesDirectory)/appservices/demo-deploy-cicd
+        buildContext:  $(dockerContextPath)
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
