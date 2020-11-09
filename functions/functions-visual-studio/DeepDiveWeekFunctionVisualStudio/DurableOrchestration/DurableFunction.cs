@@ -24,8 +24,8 @@ namespace DeepDiveWeekFunctionVisualStudio
 			string instanceId = await starter.StartNewAsync("DurableFunction", Guid.NewGuid().ToString(), body);
 
 			log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
-			// return await starter.WaitForCompletionOrCreateCheckStatusResponseAsync(req, instanceId);
-			return starter.CreateCheckStatusResponse(req, instanceId);
+			return await starter.WaitForCompletionOrCreateCheckStatusResponseAsync(req, instanceId);
+			//return starter.CreateCheckStatusResponse(req, instanceId);
 		}
 
 		[FunctionName("DurableFunction")]
